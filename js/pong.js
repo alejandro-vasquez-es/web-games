@@ -17,7 +17,7 @@ const black = getComputedStyle(document.documentElement).getPropertyValue('--bla
 
 
 // other globals variables
-// const canvasWidth = canvas.width;
+let isPaused = false;
 
 // function to set the background
 const background = () => {
@@ -68,14 +68,17 @@ class Button extends Rectangle {
 }
 
 class Text {
-    constructor(color, text, x, y, fontSize = '20px', fontFamily = ' "VT323", consolas') {
+    constructor(color, text, x, y, score = '', fontSize = '20px', fontFamily = ' "VT323", consolas') {
         this.color = color;
         this.fontSize = fontSize;
         const font = this.fontSize + fontFamily;
         this.font = font;
-        this.text = text;
+        this.text = (text === 'Player 1') ? text + ': '+ score:
+                    (text === 'Player 2') ? score + ' :' + text :
+                     text;
         this.x = x;
         this.y = y;
+        this.score = score;
     }
 
     fill() {
@@ -104,72 +107,77 @@ const clear = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-// ctx.moveTo(50, 50);
-// ctx.lineTo(150, 50);
-// ctx.lineTo(100, 200);
-// ctx.lineTo(50, 50);
-// // ctx.closePath();
-// ctx.fillStyle = 'coral';
-// ctx.fill();
+class Icon {
+    constructor(x, y, width, height, active = true, color = skyBlue, line = 2.5) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.active = active
+        this.color = color;
+        this.line = line;
+    }
+
+    createStroke() {
+        ctx.strokeStyle = skyBlue;
+        ctx.lineWidth = this.line
+        ctx.strokeRect(this.x, this.y, this.width, this.height);
+    }
+}
+
+// creating restart, pause and home buttons
+const pause = new Icon(canvas.width / 2 - 25 / 2, canvas.height - 30 + 5, 20, 20) //, pauseDraw);
+const restart = new Icon(canvas.width / 2 - 25 - 20, canvas.height - 30 + 5, 20, 20);
+const home = new Icon(canvas.width / 2 + 20, canvas.height - 30 + 5, 20, 20);
+
+const createIcons = () => {
+    //pause button
+    const pauseDraw = () => {
+        ctx.fillStyle = skyBlue;
+        ctx.fillRect(pause.x + 3.33, pause.y + 2.5, 5, 15);
+        ctx.fillRect(pause.x + 5 + 3.3 * 2, pause.y + 2.5, 5, 15);
+    }
+    pauseDraw();
+    pause.createStroke();
+
+    // create restart button
+    restart.createStroke();
+    const restartImg = document.getElementById("restart");
+    ctx.drawImage(restartImg, restart.x + 2.5, restart.y + 2.5, restart.width - 5, restart.height - 5);
+
+    // home icon
+    home.createStroke();
+    const homeImg = document.getElementById('home');
+    ctx.drawImage(homeImg, home.x + 2.5, home.y + 2.5, home.width - 5, home.width - 5);
+
+}
 
 const initializePlayerVsPlayer = () => {
 
     // creating text of players
-    const player1Text = new Text(skyBlue, 'Player 1', canvas.width / 40, canvas.height / 17, '24px')
-    const player2Text = new Text(skyBlue, 'Player 2', canvas.width - 'Player 2'.length * 11, canvas.height / 17, '24px')
+    const player1Text = new Text(skyBlue, 'Player 1', canvas.width / 40, 20, 0, '24px')
+    const player2Text = new Text(skyBlue, 'Player 2', canvas.width - 'Player 2: 0'.length * 11, 20,0, '24px')
 
-    // creating restart, pause and home buttons
 
-    class Icon {
-        constructor(x, y, w, h, color, line = 2.5, func = {}) {
-            this.x = x;
-            this.y = y;
-            this.w = w;
-            this.h = h;
-            this.color = color;
-            this.line = line;
-            this.func = func;
-        }
-
-        createStroke() {
-            ctx.strokeStyle = skyBlue;
-            ctx.lineWidth = this.line
-            ctx.strokeRect(this.x, this.y, this.w, this.h);
-        }
-    }
-
-    const createIcons = () => {
-        //pause button
-        const pauseDraw = () => {
-            ctx.fillStyle = skyBlue;
-            ctx.fillRect(canvas.width / 2 - 80 + 4, canvas.height - 40 + 4, 6.5, 17);
-            ctx.fillRect(canvas.width / 2 - 80 + 4 + 8 + 2, canvas.height - 40 + 4, 6.5, 17);
-        }
-        const pause = new Icon(canvas.width / 2 - 80, canvas.height - 40, 25, 25, pauseDraw);
-        pauseDraw();
-        pause.createStroke();
-
-        // create restart button
-        const restart = new Icon(canvas.width / 2 - 25 - 20, canvas.height - 40, 25, 25);
-        restart.createStroke();
-        const restartImg = document.getElementById("restart");
-        ctx.drawImage(restartImg, canvas.width / 2 - 25 - 20 + 2.5, canvas.height - 40 + 2.5, canvas.width / 20, canvas.height / 20);
-
-        // home icon
-        const home = new Icon(canvas.width / 2 + 20, canvas.height - 40, 25, 25);
-        home.createStroke();
-        const homeImg = document.getElementById('home');
-        ctx.drawImage(homeImg, canvas.width / 2 + 20 + 2.5, canvas.height - 40 + 2.5, canvas.width / 20, canvas.height / 20);
-
-    }
 
 
     // squares of the center
     const drawSquares = () => {
         ctx.fillStyle = skyBlue;
-        for (let i = 0; i < 13; i++) {
-            ctx.fillRect(canvas.width / 2 - 7.5, canvas.width * i / 13 + 10, 15, 15)
+        for (let i = 0; i < 11; i++) {
+            ctx.fillRect(canvas.width / 2 - 7.5, canvas.width * i / 13 + 8 + 30, 15, 15)
         }
+
+        // Creating demiliting border lines
+        ctx.beginPath();
+        ctx.moveTo(0, 30);
+        ctx.lineTo(canvas.width, 30);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height - 30);
+        ctx.lineTo(canvas.width, canvas.height - 30);
+        ctx.stroke();
     }
 
     // Creating player class
@@ -199,30 +207,38 @@ const initializePlayerVsPlayer = () => {
     }
 
     //Instancing pvp players
-    const player1 = new Player(skyBlue, canvas.width * 1 / 20, canvas.height / 2 - canvas.height * 1 / 4 / 2, canvas.width / 25, 100, 'player1');
-    const player2 = new Player(skyBlue, canvas.width * 18 / 20, canvas.height / 2 - canvas.height * 1 / 4 / 2, canvas.width / 25, 100, 'player2');
+    const player1 = new Player(skyBlue, canvas.width * 1 / 40, canvas.height / 2 - canvas.height /4 /2, canvas.width / 25, canvas.height / 4, 'player1'); //canvas.height / 2 - canvas.height * 1 / 4 / 2
+    const player2 = new Player(skyBlue, canvas.width * 37 / 40, canvas.height / 2 - canvas.height /4 /2, canvas.width / 25, canvas.height / 4, 'player2');
 
 
-    const update = () => { // function to run every time
-        clear();
-        background();
-
-        player1.stop();
-        player2.stop();
-
-        changeDy();
-        player1.newPos();
-        player2.newPos();
-
-        player1.fill();
-        player2.fill();
-
+    const drawingExtraStuff = () => {
         createIcons();
         player1Text.fill();
         player2Text.fill();
         drawSquares();
+    }
 
-        requestAnimationFrame(update);
+    const update = () => { // function to run every time
+        if (!isPaused) {
+            clear();
+            background();
+
+            player1.stop();
+            player2.stop();
+
+            ball.newPos();
+            ball.fill()
+
+            changeDy();
+            player1.newPos();
+            player2.newPos();
+
+            player1.fill();
+            player2.fill();
+
+            drawingExtraStuff();
+            requestAnimationFrame(update);
+        }
     }
 
     // look if the key is pressed to change the dy
@@ -253,16 +269,83 @@ const initializePlayerVsPlayer = () => {
             func: 'player2.moveDown()'
         }
     }
-
+    // // helpers
     // Creating detect walls function, to stop movement when player reach the top/bottom
-    const detectWalls = (player) => {
-        if (player.y <= 0) {
-            player.y = 0;
+    const detectWalls = (rect) => {
+        if (rect.y <= 30) {
+            rect.y = 30;
         }
-        if (player.y >= canvas.width - player.height) {
-            player.y = canvas.width - player.height;
+        if (rect.y >= canvas.width - rect.height - 30) {
+            rect.y = canvas.width - rect.height - 30;
         }
     }
+    
+    const getRandomLoc = () =>{
+        const locs = [200, 180];
+        const getRandomNum = () => (Math.round(Math.random() *1));
+
+        let x = (getRandomNum() === 0) ? locs[0] : locs[1];
+        let y = (getRandomNum() === 0) ? locs[0] : locs[1];
+
+        return [x,y];
+    }
+
+    const changeScore = (ball, text1, text2) =>{
+        (ball.x > canvas.width / 2) ? text1.score++:
+         text2.score++;
+    }
+
+    // ball
+    class Ball extends Rectangle {
+        constructor(x, y, dx, dy, { color = skyBlue, width = 20, height = 20 } = {}) {
+            super(color, x, y, width, height)
+            this.dx = dx;
+            this.dy = dy;
+        }
+
+        detectWallsBall() {
+            if (this.y <= 30 || this.y >= canvas.width - this.height - 30) {
+                this.dy = this.dy * -1;
+            }
+        }
+
+        detectOutside(newLoc = getRandomLoc()) {
+            if (this.x >= 400 || this.x + this.width <= 0){
+                changeScore(this, player1Text, player2Text);
+                player1.Text
+                this.dx *= -1;
+                this.dy = Math.round(Math.random() * 5 -3);
+                this.x = newLoc[0];
+                this.y = newLoc[1];
+            } 
+        }
+            
+
+        detectPlayers() {
+            if ((player1.y - this.height < this.y && player1.height + player1.y > this.y) && // ball is between platform (y axis)
+                (player1.x + player1.width === this.x)) { //x ball is smaller than x platform + width
+                this.dx *= -1;
+            }
+
+            if ((player2.y - this.height < this.y && player2.height + player2.y > this.y) &&
+                (player2.x - this.width === this.x)) {
+                this.dx *= -1
+            }
+
+        }
+
+        newPos() {
+            this.detectWallsBall();
+            this.detectOutside();
+            this.detectPlayers();
+            this.x += this.dx;
+            this.y += this.dy;
+        }
+
+    }
+
+    // instancing ball
+    const ball = new Ball(200, 40, -2, 1);
 
 
     // changing movement when key is down
@@ -287,7 +370,10 @@ const getMousePosition = (canvas, event) => {
     let x = event.clientX - rect.left;
     let y = event.clientY - rect.top;
     if (isClicked(playerVsPlayer, x, y)) {
-        initializePlayerVsPlayer()
+        initializePlayerVsPlayer();
+    }
+    if (isClicked(pause, x, y)) {
+        isPaused = isPaused ? false : true;
     }
     if (isClicked(playerVsComputer, x, y)) {}
 }

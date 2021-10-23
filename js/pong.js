@@ -68,23 +68,30 @@ class Button extends Rectangle {
 }
 
 class Text {
-    constructor(color, text, x, y, score = '', fontSize = '20px', fontFamily = ' "VT323", consolas') {
+    constructor(color, text, x, y, score = '', player ='', fontSize = '20px',completeText = '', fontFamily = ' "VT323", consolas') {
         this.color = color;
         this.fontSize = fontSize;
         const font = this.fontSize + fontFamily;
         this.font = font;
-        this.text = (text === 'Player 1') ? text + ': '+ score:
-                    (text === 'Player 2') ? score + ' :' + text :
-                     text;
+        this.completeText = (text === 'Player 1') ? text + ': '+ score:
+                             (text === 'Player 2') ? score + ' :' + text :
+                             text;
+        this.text = text
         this.x = x;
         this.y = y;
         this.score = score;
+        this.player = player;
     }
+
+
 
     fill() {
         ctx.fillStyle = this.color;
         ctx.font = this.font;
-        ctx.fillText(this.text, this.x, this.y)
+        this.completeText = (this.player === '1') ? this.text + ': '+ this.score:
+                    (this.player === '2') ? this.score + ' :' + this.text :
+                    this.text;
+        ctx.fillText(this.completeText, this.x, this.y)
     }
 }
 
@@ -154,9 +161,29 @@ const createIcons = () => {
 
 const initializePlayerVsPlayer = () => {
 
+    setTimeout(()=>{
+        ball.x = Math.round((ball.x -30)/4) * 4 + 30;
+        if (ball.dx > 0) {
+            ball.dx = 4;
+        }else{
+            ball.dx = -4;
+        }
+        controller.w.func = 'player1.moveUp(-4)';
+        controller.ArrowUp.func = 'player2.moveUp(-4)';
+        controller.s.func = 'player1.moveDown(4)';
+        controller.ArrowDown.func = 'player2.moveDown(4)';
+    }, 25000);
+
+    setTimeout(()=>{
+        controller.w.func = 'player1.moveUp(-3)';
+        controller.ArrowUp.func = 'player2.moveUp(-3)';
+        controller.s.func = 'player1.moveDown(3)';
+        controller.ArrowDown.func = 'player2.moveDown(3)';
+    }, 40000);
+
     // creating text of players
-    const player1Text = new Text(skyBlue, 'Player 1', canvas.width / 40, 20, 0, '24px')
-    const player2Text = new Text(skyBlue, 'Player 2', canvas.width - 'Player 2: 0'.length * 11, 20,0, '24px')
+    const player1Text = new Text(skyBlue, 'Player 1', canvas.width / 40, 20, 0, '1', '24px')
+    const player2Text = new Text(skyBlue, 'Player 2', canvas.width - 'Player 2: 0'.length * 11, 20,0,'2', '24px')
 
 
 
@@ -192,12 +219,12 @@ const initializePlayerVsPlayer = () => {
             this.dy = 0;
         }
 
-        moveUp() {
-            this.dy = -4;
+        moveUp(dy) {
+            this.dy = dy;
         }
 
-        moveDown() {
-            this.dy = 4;
+        moveDown(dy) {
+            this.dy = dy;
         }
 
         newPos() {
@@ -207,8 +234,8 @@ const initializePlayerVsPlayer = () => {
     }
 
     //Instancing pvp players
-    const player1 = new Player(skyBlue, canvas.width * 1 / 40, canvas.height / 2 - canvas.height /4 /2, canvas.width / 25, canvas.height / 4, 'player1'); //canvas.height / 2 - canvas.height * 1 / 4 / 2
-    const player2 = new Player(skyBlue, canvas.width * 37 / 40, canvas.height / 2 - canvas.height /4 /2, canvas.width / 25, canvas.height / 4, 'player2');
+    const player1 = new Player(skyBlue, canvas.width * 1 / 40, canvas.height / 2 - canvas.height /4 /2, canvas.width / 25, canvas.height / 6, 'player1'); //canvas.height / 2 - canvas.height * 1 / 4 / 2
+    const player2 = new Player(skyBlue, canvas.width * 37 / 40, canvas.height / 2 - canvas.height /4 /2, canvas.width / 25, canvas.height / 6, 'player2');
 
 
     const drawingExtraStuff = () => {
@@ -254,19 +281,19 @@ const initializePlayerVsPlayer = () => {
     const controller = {
         w: {
             pressed: false,
-            func: 'player1.moveUp()'
+            func: 'player1.moveUp(-2)'
         },
         s: {
             pressed: false,
-            func: 'player1.moveDown()'
+            func: 'player1.moveDown(2)'
         },
         ArrowUp: {
             pressed: false,
-            func: 'player2.moveUp()'
+            func: 'player2.moveUp(-2)'
         },
         ArrowDown: {
             pressed: false,
-            func: 'player2.moveDown()'
+            func: 'player2.moveDown(2)'
         }
     }
     // // helpers
@@ -281,7 +308,7 @@ const initializePlayerVsPlayer = () => {
     }
     
     const getRandomLoc = () =>{
-        const locs = [200, 180];
+        const locs = [210, 190];
         const getRandomNum = () => (Math.round(Math.random() *1));
 
         let x = (getRandomNum() === 0) ? locs[0] : locs[1];
@@ -290,9 +317,13 @@ const initializePlayerVsPlayer = () => {
         return [x,y];
     }
 
-    const changeScore = (ball, text1, text2) =>{
-        (ball.x > canvas.width / 2) ? text1.score++:
-         text2.score++;
+    const changeScore = (ballObj, {score: score1},{score: score2}) =>{
+        if (ballObj.x > canvas.width / 2){
+            score1++;
+        }else{
+            score2++;
+        }
+        return [score1, score2];
     }
 
     // ball
@@ -311,10 +342,15 @@ const initializePlayerVsPlayer = () => {
 
         detectOutside(newLoc = getRandomLoc()) {
             if (this.x >= 400 || this.x + this.width <= 0){
-                changeScore(this, player1Text, player2Text);
-                player1.Text
+                const [score1, score2] = changeScore(this, player1Text, player2Text);
+                player1Text.score =  score1;
+                player2Text.score =  score2;
+                if(Math.abs(this.dx) === 2){
+                    if(score1 === 2) this.dx *= 2;
+                    if(score2 === 2) this.dx *= 2;
+                }
                 this.dx *= -1;
-                this.dy = Math.round(Math.random() * 5 -3);
+                this.dy = Math.round(Math.random() * 3 -2);
                 this.x = newLoc[0];
                 this.y = newLoc[1];
             } 
@@ -345,7 +381,7 @@ const initializePlayerVsPlayer = () => {
     }
 
     // instancing ball
-    const ball = new Ball(200, 40, -2, 1);
+    const ball = new Ball(200, 40, 2, 1);
 
 
     // changing movement when key is down

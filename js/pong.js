@@ -181,14 +181,12 @@ const initializePlayerVsPlayer = () => {
     }, 5000);
 
     setTimeout(()=>{
-        console.log('10')
         controller.w.func = 'player1.moveUp(-3)';
         controller.ArrowUp.func = 'player2.moveUp(-3)';
         controller.s.func = 'player1.moveDown(3)';
         controller.ArrowDown.func = 'player2.moveDown(3)';
     }, 10000);
     setTimeout(()=>{
-        console.log('15')
         controller.w.func = 'player1.moveUp(-2)';
         controller.ArrowUp.func = 'player2.moveUp(-2)';
         controller.s.func = 'player1.moveDown(2)';
@@ -379,6 +377,16 @@ const initializePlayerVsPlayer = () => {
             if ((player1.y - this.height < this.y && player1.height + player1.y > this.y) && // ball is between platform (y axis)
                 (player1.x + player1.width === this.x)) { //x ball is smaller than x platform + width
                 this.dx *= -1;
+                const thirdPart = player1.height/ 3;
+                if (player1.y - this.height < this.y && this.y < player1.y + thirdPart-this.height){
+                    this.dy = -2
+                    console.log('top')
+                }else if(player1.y + thirdPart - this.height < this.y && this.y < player1.height / 2 + player1.y ){
+                    this.dy = -0.7
+                    console.log('mid top')
+                }
+                else if(this.y < player1.height / 2 + player1.y){
+                }
             }
 
             if ((player2.y - this.height < this.y && player2.height + player2.y > this.y) &&

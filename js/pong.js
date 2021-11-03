@@ -137,26 +137,32 @@ const pause = new Icon(canvas.width / 2 - 25 / 2, canvas.height - 30 + 5, 20, 20
 const restart = new Icon(canvas.width / 2 - 25 - 20, canvas.height - 30 + 5, 20, 20);
 const home = new Icon(canvas.width / 2 + 20, canvas.height - 30 + 5, 20, 20);
 
-const createIcons = () => {
+const createIcons = (pauseB = true, restartB = true, homeB = true) => {
     //pause button
     const pauseDraw = () => {
         ctx.fillStyle = skyBlue;
         ctx.fillRect(pause.x + 3.33, pause.y + 2.5, 5, 15);
         ctx.fillRect(pause.x + 5 + 3.3 * 2, pause.y + 2.5, 5, 15);
     }
-    pauseDraw();
-    pause.createStroke();
+    if (pauseB) {
+        pauseDraw();
+        pause.createStroke();
+    }
 
     // create restart button
-    restart.createStroke();
+    
     const restartImg = document.getElementById("restart");
-    ctx.drawImage(restartImg, restart.x + 2.5, restart.y + 2.5, restart.width - 5, restart.height - 5);
+    if( restartB ) {
+        restart.createStroke();
+        ctx.drawImage(restartImg, restart.x + 2.5, restart.y + 2.5, restart.width - 5, restart.height - 5);
+    }
 
     // home icon
-    home.createStroke();
     const homeImg = document.getElementById('home');
-    ctx.drawImage(homeImg, home.x + 2.5, home.y + 2.5, home.width - 5, home.width - 5);
-
+    if( homeB ) {
+        home.createStroke();
+        ctx.drawImage(homeImg, home.x + 2.5, home.y + 2.5, home.width - 5, home.width - 5);
+    }
 }
 
 const initializePlayerVsPlayer = () => {
@@ -172,14 +178,22 @@ const initializePlayerVsPlayer = () => {
         controller.ArrowUp.func = 'player2.moveUp(-4)';
         controller.s.func = 'player1.moveDown(4)';
         controller.ArrowDown.func = 'player2.moveDown(4)';
-    }, 25000);
+    }, 5000);
 
     setTimeout(()=>{
+        console.log('10')
         controller.w.func = 'player1.moveUp(-3)';
         controller.ArrowUp.func = 'player2.moveUp(-3)';
         controller.s.func = 'player1.moveDown(3)';
         controller.ArrowDown.func = 'player2.moveDown(3)';
-    }, 40000);
+    }, 10000);
+    setTimeout(()=>{
+        console.log('15')
+        controller.w.func = 'player1.moveUp(-2)';
+        controller.ArrowUp.func = 'player2.moveUp(-2)';
+        controller.s.func = 'player1.moveDown(2)';
+        controller.ArrowDown.func = 'player2.moveDown(2)';
+    }, 15000);
 
     // creating text of players
     const player1Text = new Text(skyBlue, 'Player 1', canvas.width / 40, 20, 0, '1', '24px')
@@ -253,18 +267,18 @@ const initializePlayerVsPlayer = () => {
             player1.stop();
             player2.stop();
 
-            ball.newPos();
             ball.fill()
-
+            
             changeDy();
             player1.newPos();
             player2.newPos();
 
             player1.fill();
             player2.fill();
-
+            
             drawingExtraStuff();
             requestAnimationFrame(update);
+            ball.newPos();
         }
     }
 
@@ -322,8 +336,9 @@ const initializePlayerVsPlayer = () => {
             score1++;
         }else{
             score2++;
-        }
-        return [score1, score2];
+        };
+        let winObject = (score1 === 5) ? ({win: true, winner: 1}) : (score2 === 5) ? ({win: true, winner: 2}) : ({win: false, winner: undefined});
+        return [score1, score2, winObject];
     }
 
     // ball
@@ -342,7 +357,7 @@ const initializePlayerVsPlayer = () => {
 
         detectOutside(newLoc = getRandomLoc()) {
             if (this.x >= 400 || this.x + this.width <= 0){
-                const [score1, score2] = changeScore(this, player1Text, player2Text);
+                const [score1, score2, {win, winner}] = changeScore(this, player1Text, player2Text);
                 player1Text.score =  score1;
                 player2Text.score =  score2;
                 if(Math.abs(this.dx) === 2){
@@ -353,6 +368,9 @@ const initializePlayerVsPlayer = () => {
                 this.dy = Math.round(Math.random() * 3 -2);
                 this.x = newLoc[0];
                 this.y = newLoc[1];
+                if (win) {
+                    winGame({winner, score1, score2})
+                }
             } 
         }
             
@@ -372,8 +390,8 @@ const initializePlayerVsPlayer = () => {
 
         newPos() {
             this.detectWallsBall();
-            this.detectOutside();
             this.detectPlayers();
+            this.detectOutside();
             this.x += this.dx;
             this.y += this.dy;
         }
@@ -382,6 +400,19 @@ const initializePlayerVsPlayer = () => {
 
     // instancing ball
     const ball = new Ball(200, 40, 2, 1);
+
+
+    // win the game
+    const winGame =({winner, score1, score2})=>{
+        clear();
+        isPaused = true;
+        background()
+        const winText = new Text(skyBlue, `Player ${winner} has won :D`, canvas.width / 2  - `Player ${winner} has won :D`.length*4 , canvas.height / 3);// - `Player ${winner} has won :D`.length
+        winText.fill();
+        const resultsText = new Text(skyBlue, `Final score -> p1: ${score1} - ${score2}: p2`, canvas.width / 2  - `Final score -> p1: ${score1} - ${score2}: p2`.length*4 , canvas.height *2/3);// - `Player ${winner} has won :D`.length
+        resultsText.fill();
+        createIcons(false);
+    }
 
 
     // changing movement when key is down
@@ -410,6 +441,10 @@ const getMousePosition = (canvas, event) => {
     }
     if (isClicked(pause, x, y)) {
         isPaused = isPaused ? false : true;
+    }
+    if (isClicked(restart, x, y)) {
+        isPaused = false;
+        initializePlayerVsPlayer();
     }
     if (isClicked(playerVsComputer, x, y)) {}
 }

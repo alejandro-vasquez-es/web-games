@@ -15,9 +15,9 @@ const dark = getComputedStyle(document.documentElement).getPropertyValue('--dark
 const red = getComputedStyle(document.documentElement).getPropertyValue('--redPong');
 const black = getComputedStyle(document.documentElement).getPropertyValue('--blackPong');
 
+//global variables
+let isFinish = true;
 
-// other globals variables
-let isPaused = false;
 
 // function to set the background
 const background = () => {
@@ -28,7 +28,7 @@ background();
 
 // creating buttons class
 class Rectangle {
-
+    
     constructor(color, x, y, width, height) { //size parameter needs
         this.color = color;
         this.x = x;
@@ -36,16 +36,16 @@ class Rectangle {
         this.width = width;
         this.height = height;
     }
-
+    
     fill() {
         ctx.fillStyle = this.color;
         ctx.fillRect(this.x, this.y, this.width, this.height)
     }
-
+    
 }
 
 class Button extends Rectangle {
-
+    
     constructor(color, x, y, width, height, text, oppositeColor, font = '30px "VT323", consolas', active = true) {
         super(color, x, y, width, height);
         this.text = text;
@@ -53,18 +53,18 @@ class Button extends Rectangle {
         this.font = font;
         this.active = active
     }
-
+    
     createText() {
         ctx.fillStyle = this.oppositeColor;
         ctx.font = this.font;
         ctx.fillText(this.text, canvas.width / 2 - this.text.length * 6, this.y + 40 - this.height + 5)
     }
-
+    
     createButton() {
         this.fill();
         this.createText();
     }
-
+    
 }
 
 class Text {
@@ -74,23 +74,23 @@ class Text {
         const font = this.fontSize + fontFamily;
         this.font = font;
         this.completeText = (text === 'Player 1') ? text + ': '+ score:
-                             (text === 'Player 2') ? score + ' :' + text :
-                             text;
+        (text === 'Player 2') ? score + ' :' + text :
+        text;
         this.text = text
         this.x = x;
         this.y = y;
         this.score = score;
         this.player = player;
     }
-
-
-
+    
+    
+    
     fill() {
         ctx.fillStyle = this.color;
         ctx.font = this.font;
         this.completeText = (this.player === '1') ? this.text + ': '+ this.score:
-                    (this.player === '2') ? this.score + ' :' + this.text :
-                    this.text;
+        (this.player === '2') ? this.score + ' :' + this.text :
+        this.text;
         ctx.fillText(this.completeText, this.x, this.y)
     }
 }
@@ -124,7 +124,7 @@ class Icon {
         this.color = color;
         this.line = line;
     }
-
+    
     createStroke() {
         ctx.strokeStyle = skyBlue;
         ctx.lineWidth = this.line
@@ -132,23 +132,11 @@ class Icon {
     }
 }
 
-// creating restart, pause and home buttons
-const pause = new Icon(canvas.width / 2 - 25 / 2, canvas.height - 30 + 5, 20, 20) //, pauseDraw);
+// creating restart and home buttons
 const restart = new Icon(canvas.width / 2 - 25 - 20, canvas.height - 30 + 5, 20, 20);
 const home = new Icon(canvas.width / 2 + 20, canvas.height - 30 + 5, 20, 20);
 
-const createIcons = (pauseB = true, restartB = true, homeB = true) => {
-    //pause button
-    const pauseDraw = () => {
-        ctx.fillStyle = skyBlue;
-        ctx.fillRect(pause.x + 3.33, pause.y + 2.5, 5, 15);
-        ctx.fillRect(pause.x + 5 + 3.3 * 2, pause.y + 2.5, 5, 15);
-    }
-    if (pauseB) {
-        pauseDraw();
-        pause.createStroke();
-    }
-
+const createIcons = (restartB = true, homeB = true) => {
     // create restart button
     
     const restartImg = document.getElementById("restart");
@@ -156,7 +144,7 @@ const createIcons = (pauseB = true, restartB = true, homeB = true) => {
         restart.createStroke();
         ctx.drawImage(restartImg, restart.x + 2.5, restart.y + 2.5, restart.width - 5, restart.height - 5);
     }
-
+    
     // home icon
     const homeImg = document.getElementById('home');
     if( homeB ) {
@@ -166,6 +154,8 @@ const createIcons = (pauseB = true, restartB = true, homeB = true) => {
 }
 
 const initializePlayerVsPlayer = () => {
+
+    isFinish = false;
 
     setTimeout(()=>{
         ball.x = Math.round((ball.x -30)/4) * 4 + 30;
@@ -178,20 +168,20 @@ const initializePlayerVsPlayer = () => {
         controller.ArrowUp.func = 'player2.moveUp(-4)';
         controller.s.func = 'player1.moveDown(4)';
         controller.ArrowDown.func = 'player2.moveDown(4)';
-    }, 5000);
+    }, 10000);
 
     setTimeout(()=>{
         controller.w.func = 'player1.moveUp(-3)';
         controller.ArrowUp.func = 'player2.moveUp(-3)';
         controller.s.func = 'player1.moveDown(3)';
         controller.ArrowDown.func = 'player2.moveDown(3)';
-    }, 10000);
+    }, 15000);
     setTimeout(()=>{
         controller.w.func = 'player1.moveUp(-2)';
         controller.ArrowUp.func = 'player2.moveUp(-2)';
         controller.s.func = 'player1.moveDown(2)';
         controller.ArrowDown.func = 'player2.moveDown(2)';
-    }, 15000);
+    }, 20000);
 
     // creating text of players
     const player1Text = new Text(skyBlue, 'Player 1', canvas.width / 40, 20, 0, '1', '24px')
@@ -258,7 +248,8 @@ const initializePlayerVsPlayer = () => {
     }
 
     const update = () => { // function to run every time
-        if (!isPaused) {
+        if (!isFinish) {
+
             clear();
             background();
 
@@ -266,17 +257,18 @@ const initializePlayerVsPlayer = () => {
             player2.stop();
 
             ball.fill()
-            
+
             changeDy();
             player1.newPos();
             player2.newPos();
 
             player1.fill();
             player2.fill();
-            
+
             drawingExtraStuff();
             requestAnimationFrame(update);
             ball.newPos();
+
         }
     }
 
@@ -318,7 +310,7 @@ const initializePlayerVsPlayer = () => {
             rect.y = canvas.width - rect.height - 30;
         }
     }
-    
+
     const getRandomLoc = () =>{
         const locs = [210, 190];
         const getRandomNum = () => (Math.round(Math.random() *1));
@@ -371,27 +363,43 @@ const initializePlayerVsPlayer = () => {
                 }
             } 
         }
-            
+
 
         detectPlayers() {
             if ((player1.y - this.height < this.y && player1.height + player1.y > this.y) && // ball is between platform (y axis)
-                (player1.x + player1.width === this.x)) { //x ball is smaller than x platform + width
+            (player1.x + player1.width === this.x)) { //x ball is smaller than x platform + width
                 this.dx *= -1;
-                const thirdPart = player1.height/ 3;
-                if (player1.y - this.height < this.y && this.y < player1.y + thirdPart-this.height){
-                    this.dy = -2
-                    console.log('top')
-                }else if(player1.y + thirdPart - this.height < this.y && this.y < player1.height / 2 + player1.y ){
-                    this.dy = -0.7
-                    console.log('mid top')
-                }
-                else if(this.y < player1.height / 2 + player1.y){
+                const thirdPart = player1.height / 3;
+
+                if(player1.y - this.height < this.y && player1.y + thirdPart - this.height >= this.y){
+                    this.dy = -2;
+                }else if(player1.y + thirdPart - this.height < this.y && this.y <= (player1.height / 2) + player1.y - (this.height / 2)){
+                    this.dy = -0.7;
+                }else if((player1.height / 2) + player1.y <= this.y && thirdPart * 2 + player1.y  > this.y){
+                    this.dy = 0.7;
+                }else if(thirdPart * 2 + player1.y <= this.y){
+                    this.dy = 2;
+                }else{
+                    this.dy = 0;
                 }
             }
 
             if ((player2.y - this.height < this.y && player2.height + player2.y > this.y) &&
-                (player2.x - this.width === this.x)) {
-                this.dx *= -1
+            (player2.x - this.width === this.x)) {
+                this.dx *= -1;
+                const thirdPart = player2.height / 3;
+
+                if(player2.y - this.height < this.y && player2.y + thirdPart - this.height >= this.y){
+                    this.dy = -2;
+                }else if(player2.y + thirdPart - this.height < this.y && this.y <= (player2.height / 2) + player2.y - (this.height / 2)){
+                    this.dy = -0.7;
+                }else if((player2.height / 2) + player2.y <= this.y && thirdPart * 2 + player2.y  > this.y){
+                    this.dy = 0.7;
+                }else if(thirdPart * 2 + player2.y <= this.y){
+                    this.dy = 2;
+                }else{
+                    this.dy = 0;
+                }
             }
 
         }
@@ -407,19 +415,19 @@ const initializePlayerVsPlayer = () => {
     }
 
     // instancing ball
-    const ball = new Ball(200, 40, 2, 1);
+    const ball = new Ball(...getRandomLoc(), 2, 0);
 
 
     // win the game
     const winGame =({winner, score1, score2})=>{
+        isFinish = true;
         clear();
-        isPaused = true;
         background()
         const winText = new Text(skyBlue, `Player ${winner} has won :D`, canvas.width / 2  - `Player ${winner} has won :D`.length*4 , canvas.height / 3);// - `Player ${winner} has won :D`.length
         winText.fill();
         const resultsText = new Text(skyBlue, `Final score -> p1: ${score1} - ${score2}: p2`, canvas.width / 2  - `Final score -> p1: ${score1} - ${score2}: p2`.length*4 , canvas.height *2/3);// - `Player ${winner} has won :D`.length
         resultsText.fill();
-        createIcons(false);
+        createIcons();
     }
 
 
@@ -438,8 +446,11 @@ const initializePlayerVsPlayer = () => {
 }
 
 
+const initializePlayerVsComputer = ()=>{
+}
 
 // detecting when click the canvas 
+
 const getMousePosition = (canvas, event) => {
     let rect = canvas.getBoundingClientRect();
     let x = event.clientX - rect.left;
@@ -447,19 +458,20 @@ const getMousePosition = (canvas, event) => {
     if (isClicked(playerVsPlayer, x, y)) {
         initializePlayerVsPlayer();
     }
-    if (isClicked(pause, x, y)) {
-        isPaused = isPaused ? false : true;
-    }
     if (isClicked(restart, x, y)) {
-        isPaused = false;
-        initializePlayerVsPlayer();
+        location.reload();
     }
-    if (isClicked(playerVsComputer, x, y)) {}
+    if (isClicked(home, x, y)) {
+        location.reload();
+    }
+    if (isClicked(playerVsComputer, x, y)) {
+        initializePlayerVsComputer();
+    }
 }
 
 const isClicked = ({ x, y, width, height, active }, xClicked, yClicked) => {
     if (xClicked >= x && xClicked <= width + x && yClicked >= y && yClicked <= y + height && active === true)
-        return true
+    return true
 }
 
 canvas.addEventListener("click", (e) => {
